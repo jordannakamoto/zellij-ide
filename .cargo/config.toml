@@ -1,0 +1,29 @@
+[build]
+# Use all available CPU cores (omitting jobs uses all cores by default)
+
+# Enable incremental compilation (faster rebuilds)
+incremental = true
+
+# Removed custom linker settings due to compatibility issues
+# [target.x86_64-apple-darwin]
+# rustflags = []
+
+# [target.aarch64-apple-darwin]
+# rustflags = []
+
+# Faster debug builds
+[profile.dev]
+# Disable debug info for dependencies (keeps it for our code)
+debug = 1
+# Split debuginfo to separate files
+split-debuginfo = "unpacked"
+
+# Even faster dev profile
+[profile.dev-fast]
+inherits = "dev"
+# No debug info at all
+debug = false
+# Faster optimization
+opt-level = 1
+# No overflow checks
+overflow-checks = false

@@ -1,0 +1,73 @@
+# Rust/Cargo
+target/
+Cargo.lock
+**/*.rs.bk
+*.pdb
+
+# IDE/Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Build artifacts
+dist/
+build/
+*.o
+*.so
+*.dylib
+*.dll
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.temp
+
+# Zellij specific
+.zellij/
+zellij.yaml
+session-*
+
+# Claude Code specific
+.claude/
+
+# Dependencies
+node_modules/
+
+# Coverage reports
+coverage/
+*.lcov
+
+# Test artifacts
+test-results/
+*.test
+
+# Documentation build
+docs/_build/
+site/

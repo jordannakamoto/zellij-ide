@@ -1,0 +1,65 @@
+[package]
+name = "zellij-ide"
+version = "0.1.0"
+authors = ["Custom IDE Team"]
+edition = "2021"
+description = "A terminal-native IDE with advanced window management"
+license = "MIT"
+rust-version = "1.84"
+
+[dependencies]
+zellij-server = { path = "../zellij-server/", version = "0.44.0" }
+zellij-utils = { path = "../zellij-utils/", version = "0.44.0" }
+zellij-tile = { path = "../zellij-tile/", version = "0.44.0" }
+anyhow = "1.0.70"
+clap = { version = "3.2.2", features = ["env", "derive", "color", "std", "suggestions"] }
+log = "0.4.17"
+env_logger = "0.10"
+miette = { version = "5.7.0", features = ["fancy"] }
+nix = "0.23.1"
+thiserror = "1.0.40"
+tokio = { version = "1.38.1", features = ["full"] }
+uuid = { version = "1.4.1", features = ["serde", "v4", "std"] }
+vte = "0.11.0"
+serde = { version = "1.0", features = ["derive", "std"] }
+serde_json = { version = "1.0", features = ["std"] }
+crossterm = { version = "0.28", features = ["serde"] }
+ratatui = "0.29"
+
+[workspace]
+members = [
+    "gui-controls",
+    ".",
+]
+
+[workspace.dependencies]
+anyhow = { version = "1.0.70", features = ["backtrace", "std"] }
+clap = { version = "3.2.2", features = ["env", "derive", "color", "std", "suggestions"] }
+log = { version = "0.4.17" }
+miette = { version = "5.7.0", features = ["fancy"] }
+nix = { version = "0.23.1" }
+thiserror = { version = "1.0.40" }
+tokio = { version = "1.38.1", features = ["full"] }
+uuid = { version = "1.4.1", features = ["serde", "v4", "std"] }
+vte = { version = "0.11.0" }
+serde = { version = "1.0", features = ["derive", "std"] }
+serde_json = { version = "1.0", features = ["std"] }
+
+[features]
+default = ["gui-controls"]
+gui-controls = []
+minimal = []  # Minimal build without heavy deps
+dev-mode = ["minimal"]  # Fast dev builds
+
+# Fast compilation profiles
+[profile.dev-fast]
+inherits = "dev"
+debug = false
+opt-level = 1
+incremental = true
+codegen-units = 256
+
+[profile.fast-check]
+inherits = "dev"
+debug = false
+opt-level = 0
