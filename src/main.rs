@@ -4,9 +4,9 @@ use std::path::PathBuf;
 
 mod window_manager;
 mod terminal_ide;
-mod gui_controls;
 mod command_palette;
 mod keybindings;
+mod features;
 
 use terminal_ide::TerminalIDE;
 
@@ -51,22 +51,21 @@ async fn main() -> Result<()> {
     // Initialize logging
     env_logger::init();
 
-    // Start the terminal IDE
-    let mut ide = TerminalIDE::new(cli.gui_controls, cli.directory).await?;
-
     match cli.command {
         Some(Commands::Start { name }) => {
-            ide.start_session(name).await?;
+            log::info!("Starting IDE session: {:?}", name);
+            TerminalIDE::run().await?;
         },
         Some(Commands::Attach { name }) => {
-            ide.attach_session(name).await?;
+            log::info!("Attach not yet implemented, starting new session: {}", name);
+            TerminalIDE::run().await?;
         },
         Some(Commands::List) => {
-            ide.list_sessions().await?;
+            println!("Session listing not yet implemented");
         },
         None => {
-            // Default to starting a new session
-            ide.start_session(None).await?;
+            // Default to starting IDE
+            TerminalIDE::run().await?;
         },
     }
 

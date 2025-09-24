@@ -43,6 +43,11 @@ impl KeyBinding {
         Self::new(key, KeyModifiers::ALT)
     }
 
+    /// Create a Cmd+key binding (Super key on macOS)
+    pub fn cmd(key: KeyCode) -> Self {
+        Self::new(key, KeyModifiers::SUPER)
+    }
+
     /// Check if this key binding matches a key event
     pub fn matches(&self, event: &KeyEvent) -> bool {
         self.key == event.code && self.modifiers == event.modifiers
@@ -61,6 +66,7 @@ impl KeyBinding {
                     "ctrl" | "control" => modifiers |= KeyModifiers::CONTROL,
                     "shift" => modifiers |= KeyModifiers::SHIFT,
                     "alt" => modifiers |= KeyModifiers::ALT,
+                    "cmd" | "super" => modifiers |= KeyModifiers::SUPER,
                     _ => return Err(anyhow::anyhow!("Unknown modifier: {}", part)),
                 }
             }
@@ -216,12 +222,12 @@ impl Command {
                 window_manager.create_tab(None)?;
             },
             CommandAction::SplitHorizontal => {
-                // TODO: Implement horizontal split
-                log::info!("Executing split horizontal");
+                // TODO: Integrate with zellij-server PTY to create real terminal splits
+                log::info!("Executing split horizontal - TODO: implement zellij-server integration");
             },
             CommandAction::SplitVertical => {
-                // TODO: Implement vertical split
-                log::info!("Executing split vertical");
+                // TODO: Integrate with zellij-server PTY to create real terminal splits
+                log::info!("Executing split vertical - TODO: implement zellij-server integration");
             },
             CommandAction::ShowCommandPalette => {
                 // This is handled by the GUI system
@@ -342,7 +348,7 @@ impl KeybindingManager {
         // View operations
         self.register_command_and_binding(
             Command::new("view.command_palette", "Show Command Palette", "Show the command palette", "View", CommandAction::ShowCommandPalette),
-            KeyBinding::ctrl_shift(KeyCode::Char('p')),
+            KeyBinding::cmd(KeyCode::Char('p')),
         );
         self.register_command_and_binding(
             Command::new("view.toggle_terminal", "Toggle Terminal", "Show/hide integrated terminal", "View", CommandAction::ToggleTerminal),
@@ -499,8 +505,8 @@ mod tests {
         );
 
         assert_eq!(
-            KeyBinding::from_string("Ctrl+Shift+P").unwrap(),
-            KeyBinding::ctrl_shift(KeyCode::Char('p'))
+            KeyBinding::from_string("Cmd+P").unwrap(),
+            KeyBinding::cmd(KeyCode::Char('p'))
         );
 
         assert_eq!(
@@ -523,7 +529,7 @@ mod tests {
 
         assert_eq!(
             KeyBinding::ctrl_shift(KeyCode::Char('p')).to_string(),
-            "Ctrl+Shift+P"
+            "Cmd+P"
         );
 
         assert_eq!(

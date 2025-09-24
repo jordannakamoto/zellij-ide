@@ -98,6 +98,15 @@ impl WindowManager {
         }
     }
 
+    pub fn handle_resize(&mut self, width: u16, height: u16) -> Result<()> {
+        self.display_area = Size {
+            cols: width as usize,
+            rows: height as usize,
+        };
+        // TODO: Update all pane geometries based on new size
+        Ok(())
+    }
+
     /// Create a new tab
     pub fn create_tab(&mut self, name: Option<String>) -> Result<TabId> {
         let id = TabId(Uuid::new_v4());

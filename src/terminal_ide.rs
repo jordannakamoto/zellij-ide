@@ -1,152 +1,115 @@
 use anyhow::Result;
-use std::path::PathBuf;
-use tokio::time::{sleep, Duration};
-use zellij_utils::pane_size::Size;
+use std::io;
 
 use crate::window_manager::WindowManager;
-use crate::gui_controls::GuiControls;
+use crate::command_palette::CommandPalette;
+use crate::keybindings::KeybindingManager;
+use crate::features::FeatureRegistry;
 
-/// Main terminal IDE orchestrator
+/// Main IDE application
 pub struct TerminalIDE {
     window_manager: WindowManager,
-    gui_controls: Option<GuiControls>,
-    working_directory: Option<PathBuf>,
+    command_palette: CommandPalette,
+    keybinding_manager: KeybindingManager,
+    feature_registry: FeatureRegistry,
+    show_command_palette: bool,
+    show_gui: bool,
 }
 
 impl TerminalIDE {
-    pub async fn new(enable_gui_controls: bool, directory: Option<PathBuf>) -> Result<Self> {
-        // Get terminal size
-        let (cols, rows) = crossterm::terminal::size()?;
-        let display_area = Size {
+    pub fn new() -> Self {
+        // Get terminal size for display area
+        let (cols, rows) = crossterm::terminal::size().unwrap_or((80, 24));
+        let display_area = zellij_utils::pane_size::Size {
             cols: cols as usize,
             rows: rows as usize,
         };
 
-        let window_manager = WindowManager::new(display_area, enable_gui_controls);
+        let window_manager = WindowManager::new(display_area, true);
 
-        let gui_controls = if enable_gui_controls {
-            Some(GuiControls::new()?)
-        } else {
-            None
-        };
+        // Create command system for command palette
+        let command_system = crate::command_palette::create_command_system();
+        let command_palette = CommandPalette::new(command_system);
 
-        Ok(Self {
+        let keybinding_manager = KeybindingManager::new();
+        let feature_registry = FeatureRegistry::new();
+
+        Self {
             window_manager,
-            gui_controls,
-            working_directory: directory,
-        })
+            command_palette,
+            keybinding_manager,
+            feature_registry,
+            show_command_palette: false,
+            show_gui: true,
+        }
     }
 
-    pub async fn start_session(&mut self, session_name: Option<String>) -> Result<()> {
-        let name = session_name.unwrap_or_else(|| "default".to_string());
-        log::info!("Starting IDE session: {}", name);
+    /// Render the main IDE interface
+    fn render_main_interface(&self) -> String {
+        let mut content = String::new();
 
-        // Create initial tab and pane
-        let tab_id = self.window_manager.create_tab(Some("Main".to_string()))?;
-        log::info!("Created initial tab: {:?}", tab_id);
+        content.push_str("🚀 Zellij IDE - Terminal Native Development Environment\n");
+        content.push_str("═══════════════════════════════════════════════════════\n\n");
+        content.push_str("Welcome to Zellij IDE! A terminal-native IDE with advanced window management.\n\n");
+        content.push_str("📋 Available Commands:\n");
+        content.push_str("  Cmd+P / Ctrl+P - Command Palette\n");
+        content.push_str("  F1 - Toggle GUI Overlay\n");
+        content.push_str("  Esc - Exit menus\n");
+        content.push_str("  Ctrl+C - Exit IDE\n\n");
 
-        // Change to working directory if specified
-        if let Some(ref dir) = self.working_directory {
-            log::info!("Setting working directory to: {}", dir.display());
-            std::env::set_current_dir(dir)?;
+        if self.show_gui {
+            content.push_str("✨ Press Cmd+P to see the command palette! ✨");
+        } else {
+            content.push_str("GUI overlay hidden. Press F1 to show it again.");
         }
 
-        // Start the main event loop
-        self.run_event_loop().await?;
-
-        Ok(())
+        content
     }
 
-    pub async fn attach_session(&mut self, session_name: String) -> Result<()> {
-        log::info!("Attaching to session: {}", session_name);
-        // TODO: Implement session persistence and attachment
-        println!("Session attachment not yet implemented. Starting new session instead.");
-        self.start_session(Some(session_name)).await
+    /// Render the command palette
+    fn render_command_palette(&self) -> String {
+        let mut content = String::new();
+
+        content.push_str("🎨 Command Palette\n");
+        content.push_str("═══════════════════\n\n");
+        content.push_str("⚡ Available Commands:\n\n");
+
+        content.push_str("📁  File: New, Open, Save\n");
+        content.push_str("✏️   Edit: Cut, Copy, Paste\n");
+        content.push_str("👁️   View: Toggle panels, Zoom\n");
+        content.push_str("▦  Pane: Split horizontal, Split vertical\n");
+        content.push_str("📑  Tab: New tab, Close tab\n");
+        content.push_str("💻  Terminal: New terminal, Run command\n\n");
+
+        content.push_str("Press Esc to close • Use ↑↓ to navigate • Enter to select");
+
+        content
     }
 
-    pub async fn list_sessions(&self) -> Result<()> {
-        println!("Active sessions:");
-        println!("  - No sessions found (persistence not yet implemented)");
-        Ok(())
-    }
+    /// Simple run method for now
+    pub async fn run() -> Result<()> {
+        let ide = Self::new();
 
-    async fn run_event_loop(&mut self) -> Result<()> {
-        log::info!("Starting IDE event loop");
+        // Clear screen and show initial interface
+        print!("\x1B[2J\x1B[H"); // Clear screen and move cursor to top
 
-        // Show initial interface immediately
-        if let Some(ref mut gui_controls) = self.gui_controls {
-            gui_controls.show_initial_interface(&self.window_manager)?;
+        if ide.show_command_palette {
+            println!("{}", ide.render_command_palette());
+        } else {
+            println!("{}", ide.render_main_interface());
         }
 
-        loop {
-            // Handle GUI events if enabled
-            if let Some(ref mut gui_controls) = self.gui_controls {
-                if !gui_controls.handle_events(&mut self.window_manager)? {
-                    log::info!("GUI controls requested exit");
-                    break;
-                }
+        println!("\nPress Enter to exit...");
+        let mut input = String::new();
+        io::stdin().read_line(&mut input)?;
 
-                // Always render GUI (not just when overlay is shown)
-                gui_controls.render(&self.window_manager)?;
-            } else {
-                // If no GUI controls, just show a basic message and exit
-                println!("Zellij IDE running without GUI controls. Press Ctrl+C to exit.");
-                sleep(Duration::from_millis(1000)).await;
-            }
-
-            // Handle terminal/pane events
-            self.handle_terminal_events().await?;
-
-            // Small delay to prevent busy waiting
-            sleep(Duration::from_millis(16)).await;
-        }
-
-        log::info!("IDE event loop ending");
         Ok(())
     }
+}
 
-    async fn handle_terminal_events(&mut self) -> Result<()> {
-        // TODO: Integrate with Zellij's terminal handling
-        // This would involve:
-        // 1. Reading from PTY processes
-        // 2. Updating terminal grids
-        // 3. Handling terminal output
-        // 4. Managing process lifecycle
-
-        // For now, just a placeholder
-        Ok(())
-    }
-
-    /// Create a new terminal pane
-    pub fn create_terminal_pane(&mut self) -> Result<()> {
-        let _pane_id = self.window_manager.create_tiled_pane_in_tab(
-            // TODO: Get current tab ID
-            crate::window_manager::TabId::new(),
-            None
-        )?;
-
-        log::info!("Created new terminal pane: {:?}", _pane_id);
-        Ok(())
-    }
-
-    /// Create a floating window with terminal
-    pub fn create_floating_terminal(&mut self) -> Result<()> {
-        let _window_id = self.window_manager.create_floating_window(None)?;
-        log::info!("Created floating terminal window: {:?}", _window_id);
-        Ok(())
-    }
-
-    /// Split current pane
-    pub fn split_current_pane(&mut self, direction: zellij_utils::data::Direction) -> Result<()> {
-        // TODO: Get current pane ID and split it
-        let placeholder_pane_id = crate::window_manager::PaneId::new();
-        let _new_pane_id = self.window_manager.split_pane_at_position(
-            placeholder_pane_id,
-            (0, 0),
-            direction
-        )?;
-
-        log::info!("Split pane in direction: {:?}", direction);
-        Ok(())
+/// Default trait implementation for easier instantiation
+impl Default for TerminalIDE {
+    fn default() -> Self {
+        Self::new()
     }
 }

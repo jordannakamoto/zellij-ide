@@ -323,7 +323,7 @@ fn render_main_interface(frame: &mut Frame, _show_overlay: bool, active_menu: &O
         ]),
         Line::from(vec![
             Span::raw("  "),
-            Span::styled("Ctrl+Shift+P", Style::default().fg(Color::Magenta).add_modifier(Modifier::BOLD)),
+            Span::styled("Cmd+P / Ctrl+P", Style::default().fg(Color::Magenta).add_modifier(Modifier::BOLD)),
             Span::raw(" - Command Palette"),
         ]),
         Line::from(vec![
@@ -443,6 +443,34 @@ fn render_pane_creation_help(frame: &mut Frame, area: Rect) {
         .alignment(Alignment::Center);
 
     frame.render_widget(paragraph, help_area);
+}
+
+impl GuiControls {
+    pub fn is_active(&self) -> bool {
+        self.show_overlay
+    }
+
+    pub fn handle_key(&mut self, key_event: KeyEvent) -> Result<()> {
+        // Just log for now - the actual key handling is done in the private method
+        log::debug!("GuiControls handling key event: {:?}", key_event);
+        Ok(())
+    }
+
+    pub fn handle_mouse(&mut self, _mouse_event: crossterm::event::MouseEvent) -> Result<()> {
+        // Public version of mouse event handling
+        log::debug!("GuiControls handling mouse event");
+        Ok(())
+    }
+
+    pub fn toggle(&mut self) -> Result<()> {
+        self.show_overlay = !self.show_overlay;
+        Ok(())
+    }
+
+    pub fn show_command_palette(&mut self) -> Result<()> {
+        self.command_palette.show();
+        Ok(())
+    }
 }
 
 impl Drop for GuiControls {
