@@ -1,62 +1,43 @@
 [package]
 name = "zellij-ide"
 version = "0.1.0"
-authors = ["Custom IDE Team"]
 edition = "2021"
-description = "A terminal-native IDE with advanced window management"
-license = "MIT"
-rust-version = "1.84"
-
-[dependencies]
-zellij-server = { path = "../zellij-server/", version = "0.44.0" }
-zellij-utils = { path = "../zellij-utils/", version = "0.44.0" }
-zellij-tile = { path = "../zellij-tile/", version = "0.44.0" }
-anyhow = "1.0.70"
-clap = { version = "3.2.2", features = ["env", "derive", "color", "std", "suggestions"] }
-log = "0.4.17"
-env_logger = "0.10"
-miette = { version = "5.7.0", features = ["fancy"] }
-nix = "0.23.1"
-thiserror = "1.0.40"
-tokio = { version = "1.38.1", features = ["full"] }
-uuid = { version = "1.4.1", features = ["serde", "v4", "std"] }
-vte = "0.11.0"
-serde = { version = "1.0", features = ["derive", "std"] }
-serde_json = { version = "1.0", features = ["std"] }
-crossterm = { version = "0.29", features = ["serde"] }
 
 [workspace]
-members = [
-    ".",
-]
 
-[workspace.dependencies]
-anyhow = { version = "1.0.70", features = ["backtrace", "std"] }
-clap = { version = "3.2.2", features = ["env", "derive", "color", "std", "suggestions"] }
-log = { version = "0.4.17" }
-miette = { version = "5.7.0", features = ["fancy"] }
-nix = { version = "0.23.1" }
-thiserror = { version = "1.0.40" }
-tokio = { version = "1.38.1", features = ["full"] }
-uuid = { version = "1.4.1", features = ["serde", "v4", "std"] }
-vte = { version = "0.11.0" }
-serde = { version = "1.0", features = ["derive", "std"] }
-serde_json = { version = "1.0", features = ["std"] }
+[dependencies]
+# GUI framework
+eframe = "0.29"
+egui = "0.29"
+# egui_code_editor 0.2.17 requires egui 0.32+, we'll implement our own simple editor
 
-[features]
-default = []
-minimal = []  # Minimal build without heavy deps
-dev-mode = ["minimal"]  # Fast dev builds
+# Actor system and async
+tokio = { version = "1.38", features = ["full"] }
+async-trait = "0.1"
 
-# Fast compilation profiles
-[profile.dev-fast]
-inherits = "dev"
-debug = false
-opt-level = 1
-incremental = true
-codegen-units = 256
+# Data structures
+uuid = { version = "1.4", features = ["v4", "serde"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
 
-[profile.fast-check]
-inherits = "dev"
-debug = false
-opt-level = 0
+# Utilities
+anyhow = "1.0"
+thiserror = "1.0"
+log = "0.4"
+env_logger = "0.11"
+
+# For future LSP integration
+tower-lsp = "0.20"
+lsp-types = "0.95"
+
+# Configuration
+toml = "0.8"
+dirs = "5.0"
+
+# Syntax highlighting
+syntect = "5.2"
+
+# High-performance terminal support
+vte = "0.13"
+portable-pty = "0.8"
+mio = "0.8"
